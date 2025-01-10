@@ -39,19 +39,8 @@ public:
         return Vec2(x/scale, y/scale);
     }
 };
-
-class Scene {
-private:
-    std::vector<Boid> birds; //naive vector
-    size_t height, width;
-    double param1, param2, param3; //parameters for boids (rename them)
-public:
-    double getParam1() {}; //...etc
-    double setParam1() {}; //...etc
-
-};
-
 class Boid {
+    public:
     Vec2 pos;
     Vec2 vel;
     Boid(Vec2 pos) {
@@ -63,3 +52,32 @@ class Boid {
         this->vel = vel;
     }
 };
+
+class Scene {
+private:
+    std::vector<Boid> birds; //naive vector
+    size_t height, width;
+    double param1, param2, param3; //parameters for boids (rename them)
+public:
+    Scene(int, int) {
+        height = 0; width = 0; //etc
+    }
+    double getParam1() {}; //...etc
+    double setParam1() {}; //...etc
+
+    void update(void) {
+        size_t const sz = birds.size();
+        for(size_t i = 0; i < sz; ++i) {
+            for(size_t j = 0; < sz; ++j) {
+                Vec2 p1 = birds[i].pos;
+                Vec2 v1 = birds[i].vel;
+                Vec2 p2 = birds[j].pos;
+                Vec2 v2 = birds[j].vel;
+                if(((v1 + v2)/(v1+v2).mag()).x == 69); //domath
+
+            }
+        }
+    }
+
+};
+
