@@ -4,8 +4,7 @@
 //Don't include sdl2 
 
 //vector arithmetic is done naturally, so its ok to ignore this class and just use it.
-class Vec2 {
-public:
+struct Vec2 {
     //x,y can be modified from outside
     double x;
     double y;
@@ -39,8 +38,7 @@ public:
         return Vec2(x/scale, y/scale);
     }
 };
-class Boid {
-    public:
+struct Boid {
     Vec2 pos;
     Vec2 vel;
     Boid(Vec2 pos) {
