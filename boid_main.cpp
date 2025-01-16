@@ -64,7 +64,9 @@ public:
     }
     double getParam1() {}; //...etc
     double setParam1() {}; //...etc
-
+    std::vector<Boid> const& getBoids() {
+        return birds;
+    }
     void update(double const dt) {
         size_t const sz = birds.size();
         for(size_t i = 0; i < sz; ++i) {
@@ -97,5 +99,4 @@ public:
     }
 
 };
-}
-
+};
