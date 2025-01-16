@@ -17,7 +17,7 @@ struct Vec2 {
         this->y = y;
     }
     double mag(void) {
-        return sqrt(x*x + y*y);
+        return (0.96043387*std::max(x,y) + 0.397824734*std::min(x,y));
     }
     Vec2 operator+(Vec2 const& v) const {
         return Vec2(x+v.x, y+v.y);
@@ -43,6 +43,7 @@ struct Boid {
     Vec2 vel;
     double view_radius, protected_radius;
     double avoid_factor, matching_factor, centering_factor, turn_factor;
+    double min_speed, max_speed;
     Boid(Vec2 pos) {
         this->pos = pos;
         this->vel = Vec2();
@@ -57,6 +58,7 @@ class Scene {
 private:
     std::vector<Boid> birds; //naive vector
     size_t height, width;
+    int const bottom_border, top_border, left_border, right_border;
      //parameters for boids 
 public:
     Scene(int, int) {
@@ -83,6 +85,7 @@ public:
                     p_tot = p_tot + birds[i].pos;
                     v_tot = v_tot + birds[i].vel;
                     neighbouring_boids = neighbouring_boids + 1;
+                }
                 if(((v1-v2).mag()) <= birds[i].protected_radius){ //setting variables for Separation
                     distance = distance + (birds[i].pos - birds[j].pos);
                 }
@@ -93,8 +96,27 @@ public:
                 birds[i].vel = birds[i].vel + (p_avg - birds[i].pos) * birds[i].centering_factor;
                 birds[i].vel = birds[i].vel + (v_avg - birds[i].vel) * birds[i].matching_factor;
 
+            }if (birds[i].pos.x < left_border){ //turning from border
+                birds[i].vel.x = birds[i].vel.x + birds[i].turn_factor;
+            }if (birds[i].pos.x > right_border){
+                birds[i].vel.x = birds[i].vel.x - birds[i].turn_factor;
+            }if (birds[i].pos.y > top_border){
+                birds[i].vel.y = birds[i].vel.y - birds[i].turn_factor;
+            }if (birds[i].pos.y < bottom_border){
+                birds[i].vel.y = birds[i].vel.y + birds[i].turn_factor;
             }
-                }    
+            double MIN = std::min(birds[i].vel.x,birds[i].vel.y);
+            double MAX = std::max(birds[i].vel.x,birds[i].vel.y);
+            double speed = birds[i].vel.mag(); 
+            if (speed < birds[i].min_speed){   
+                birds[i].vel.x = birds[i].vel.x/speed * birds[i].min_speed;
+                birds[i].vel.y = birds[i].vel.x/speed * birds[i].max_speed;
+            }if (speed > birds[i].max_speed){  
+                birds[i].vel.x = birds[i].vel.x/speed * birds[i].max_speed;
+                birds[i].vel.y = birds[i].vel.x/speed * birds[i].max_speed;
+
+                
+            }  
         }
     }
 
