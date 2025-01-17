@@ -77,9 +77,11 @@ public:
             Vec2 distance = Vec2();//Separation
             Vec2 v_tot = Vec2(); //Alignment
             for(size_t j = 0; j < sz; ++j) {
-                Vec2 p1 = birds[i].pos;
-                Vec2 v1 = birds[i].vel;
-                Vec2 p2 = birds[j].pos;
+                //when calc conditions then use these, when modifying, use birds[i]
+                //NOTE: birds[i] is expensive
+                Vec2 const p1 = birds[i].pos;
+                Vec2 const v1 = birds[i].vel;
+                Vec2 const p2 = birds[j].pos;
                 Vec2 v2 = birds[j].vel;
                 if(((v1-v2).mag()) <= birds[i].view_radius){ //setting variables for Cohesion and Alignment
                     p_tot = p_tot + birds[i].pos;
