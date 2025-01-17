@@ -108,15 +108,9 @@ public:
             double MIN = std::min(birds[i].vel.x,birds[i].vel.y);
             double MAX = std::max(birds[i].vel.x,birds[i].vel.y);
             double speed = birds[i].vel.mag(); 
-            if (speed < birds[i].min_speed){   
-                birds[i].vel.x = birds[i].vel.x/speed * birds[i].min_speed;
-                birds[i].vel.y = birds[i].vel.x/speed * birds[i].max_speed;
-            }if (speed > birds[i].max_speed){  
-                birds[i].vel.x = birds[i].vel.x/speed * birds[i].max_speed;
-                birds[i].vel.y = birds[i].vel.x/speed * birds[i].max_speed;
+            if (speed < birds[i].min_speed) birds[i].vel = birds[i].vel * birds[i].mix_speed/speed;
+            if (speed > birds[i].max_speed) birds[i].vel = birds[i].vel * birds[i].max_speed/speed;
 
-                
-            }  
         }
     }
 
