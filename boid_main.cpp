@@ -57,7 +57,7 @@ struct Boid {
 class Scene {
 private:
     std::vector<Boid> birds; //naive vector
-    size_t height, width;
+    int height, width;
     int const bottom_border, top_border, left_border, right_border;
      //parameters for boids 
 public:
@@ -77,10 +77,12 @@ public:
             Vec2 distance = Vec2();//Separation
             Vec2 v_tot = Vec2(); //Alignment
             for(size_t j = 0; j < sz; ++j) {
-                Vec2 p1 = birds[i].pos;
-                Vec2 v1 = birds[i].vel;
-                Vec2 p2 = birds[j].pos;
-                Vec2 v2 = birds[j].vel;
+                //when calc conditions then use these, when modifying, use birds[i]
+                //NOTE: birds[i] is expensive
+                Vec2 const p1 = birds[i].pos;
+                Vec2 const v1 = birds[i].vel;
+                Vec2 const p2 = birds[j].pos;
+                Vec2 const v2 = birds[j].vel;
                 if(((v1-v2).mag()) <= birds[i].view_radius){ //setting variables for Cohesion and Alignment
                     p_tot = p_tot + birds[i].pos;
                     v_tot = v_tot + birds[i].vel;
@@ -105,18 +107,10 @@ public:
             }if (birds[i].pos.y < bottom_border){
                 birds[i].vel.y = birds[i].vel.y + birds[i].turn_factor;
             }
-            double MIN = std::min(birds[i].vel.x,birds[i].vel.y);
-            double MAX = std::max(birds[i].vel.x,birds[i].vel.y);
             double speed = birds[i].vel.mag(); 
-            if (speed < birds[i].min_speed){   
-                birds[i].vel.x = birds[i].vel.x/speed * birds[i].min_speed;
-                birds[i].vel.y = birds[i].vel.x/speed * birds[i].max_speed;
-            }if (speed > birds[i].max_speed){  
-                birds[i].vel.x = birds[i].vel.x/speed * birds[i].max_speed;
-                birds[i].vel.y = birds[i].vel.x/speed * birds[i].max_speed;
+            if (speed < birds[i].min_speed) birds[i].vel = birds[i].vel * birds[i].mix_speed/speed;
+            if (speed > birds[i].max_speed) birds[i].vel = birds[i].vel * birds[i].max_speed/speed;
 
-                
-            }  
         }
     }
     }
