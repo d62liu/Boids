@@ -75,14 +75,14 @@ Vec2 operator/(double const scale, Vec2 v){
 
 
 BoidParams::BoidParams(void) {
-    this->view_radius = 70;
-    this->protected_radius = 20,
-    this->avoid_factor = 20, 
-    this->matching_factor = 1.5, 
-    this->centering_factor = 1.5, 
+    this->view_radius = 200;
+    this->protected_radius = 10,
+    this->avoid_factor = 0.05, 
+    this->matching_factor = 0.05, 
+    this->centering_factor = 0.0005, 
     this->turn_accel = 2,
-    this->min_speed= 60, 
-    this->max_speed = 100;
+    this->min_speed= 600, 
+    this->max_speed = 900;
 }
 
 Boid::Boid(Vec2 pos) {
@@ -115,7 +115,7 @@ void Scene::makeBoid(double x, double y, double vx, double vy){
 void Scene::update(double const dt) {
     int const bottom_border = 0;
     int const top_border = height - 1;
-    int const right_border = width + 1;
+    int const right_border = width - 1;
     int const left_border = 0;
 
     size_t const sz = birds.size();
@@ -136,7 +136,7 @@ void Scene::update(double const dt) {
                 distance += (p2 - p1);  //setting variables for Separation
 
             //NOTE:What? why are we updating position? 
-            //birds[i].pos += distance * birds[i].params.avoid_factor; //calculation for Separation
+            birds[i].vel -= dt * distance * birds[i].params.avoid_factor; //calculation for Separation
 
             //TODO: fix overflow error using "rolling" average
             if((p1-p2).mag() < birds[i].params.view_radius) { //setting variables for Cohesion and Alignment
@@ -148,9 +148,9 @@ void Scene::update(double const dt) {
             if (num_neighbors > 0) { //Calculation for Cohesion and Alignment
                 Vec2 const p_avg = p_tot/num_neighbors;
                 Vec2 const v_avg = v_tot/num_neighbors;
-                birds[i].vel += (p_avg - p1) * birds[i].params.centering_factor;
+                birds[i].vel +=  dt * (p_avg - p1) * birds[i].params.centering_factor;
 
-                birds[i].vel += (v_avg - v1) * birds[i].params.matching_factor;
+                birds[i].vel +=  dt * (v_avg - v1) * birds[i].params.matching_factor;
 
             }
 

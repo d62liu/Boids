@@ -7,8 +7,8 @@
 #include "boid_interface.h"
 int main(int argc, char*argv[]) {
     SDL_Init(SDL_INIT_EVERYTHING);
-    #define WIDTH 400
-    #define HEIGHT 400
+    #define WIDTH 800
+    #define HEIGHT 600
     SDL_Window *window = SDL_CreateWindow("test",SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, 0);
     if(!window) fprintf(stderr, "could not make window: %s" "\n", SDL_GetError());
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1,0);
@@ -21,11 +21,12 @@ int main(int argc, char*argv[]) {
     double dt =0;
     size_t LAST = 0;
     size_t NOW = SDL_GetPerformanceCounter();
-        gamewindow->placeBird(10, 10);
-        gamewindow->placeBird(20, 20);
-        gamewindow->placeBird(30, 30);
-        gamewindow->placeBird(40, 40);
+    int numbirds = 100;
     while(1) {
+        while(numbirds) {
+            --numbirds;
+            gamewindow->placeBird(numbirds, numbirds);
+        }
         LAST = NOW;
         NOW = SDL_GetPerformanceCounter();
         dt = (double)(NOW-LAST)/(double)SDL_GetPerformanceFrequency();

@@ -13,7 +13,9 @@ void GameWindow::update(double dt) {
     scene->update(dt);
 }
 void GameWindow::placeBird(int x, int y) {
-    this->scene->makeBoid(x,y, 1,1);
+    static int count = 0;
+    ++count;
+    this->scene->makeBoid(x,y, count * (count&1? -1 : 1),count * (count%3? -1 : 1));
 }
 //Does not free renderer
 void GameWindow::render(SDL_Renderer *renderer) {
@@ -22,7 +24,7 @@ void GameWindow::render(SDL_Renderer *renderer) {
     for(Boid const& curboid : boids) {
         double x = curboid.pos.x;
         double y = curboid.pos.y;
-        SDL_Rect const rect = {.x=(int)x,.y=(int)y,.w=10,.h=10};
-        SDL_RenderDrawRect(renderer,&rect);
+        SDL_FRect const rect = {.x=x,.y=y,.w=5,.h=5};
+        SDL_RenderDrawRectF(renderer,&rect);
     }
 }
