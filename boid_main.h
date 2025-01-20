@@ -8,12 +8,12 @@ struct Vec2 {
     double y;
     Vec2(void);
     Vec2(double x, double y);
-    double mag(void);
+    double mag(void) const;
     Vec2& operator+=(Vec2 const& v);
     friend Vec2 operator+(Vec2 lhs, Vec2 const& rhs);
     Vec2& operator-=(Vec2 const& v);
     friend Vec2 operator-(Vec2 lhs, Vec2 const& rhs);
-    Vec2& operator-(void);
+    Vec2 operator-(void) const;
     Vec2& operator*=(double const scale);
     friend Vec2 operator*(Vec2 v, double const scale);
     friend Vec2 operator*(double const scale, Vec2 v);
@@ -35,6 +35,7 @@ struct BoidParams {
     BoidParams(void);
 };
 
+//TODO: float will do
 struct Boid {
     Vec2 pos;
     Vec2 vel;

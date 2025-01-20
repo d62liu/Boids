@@ -3,8 +3,12 @@
 #include "boid_main.h"
 #include "SDL2/SDL.h"
 class GameWindow {
+private:
     Scene *scene;
-    public:
+    int FPS; // used for fps display only
+    void renderGui(SDL_Renderer *renderer);
+    void renderBirds(SDL_Renderer *renderer);
+public:
     GameWindow(int w, int h);
     void placeBird(int x,int y);
     void update(double dt);
