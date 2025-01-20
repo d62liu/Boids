@@ -49,7 +49,7 @@ private:
     std::vector<Boid> birds; //naive vector
     int height, width;
 public:
-    Scene(int h, int w);
+    Scene(int w, int h);
     
     std::vector<Boid> const& getBoids();
 

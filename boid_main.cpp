@@ -77,12 +77,12 @@ Vec2 operator/(double const scale, Vec2 v){
 BoidParams::BoidParams(void) {
     this->view_radius = 200;
     this->protected_radius = 10,
-    this->avoid_factor = 0.05, 
-    this->matching_factor = 0.05, 
-    this->centering_factor = 0.0005, 
-    this->turn_accel = 2,
-    this->min_speed= 600, 
-    this->max_speed = 900;
+    this->avoid_factor = 0.2, 
+    this->matching_factor = 0.001, 
+    this->centering_factor = 0.006, 
+    this->turn_accel = 5,
+    this->min_speed= 500, 
+    this->max_speed = 700;
 }
 
 Boid::Boid(Vec2 pos) {
@@ -96,7 +96,7 @@ Boid::Boid (Vec2 pos, Vec2 vel) {
     this->params = BoidParams();
 }
 
-Scene::Scene(int h, int w) {
+Scene::Scene(int w, int h) {
     height = h; 
     width = w; 
 }
@@ -114,8 +114,8 @@ void Scene::makeBoid(double x, double y, double vx, double vy){
 
 void Scene::update(double const dt) {
     int const bottom_border = 0;
-    int const top_border = height - 1;
-    int const right_border = width - 1;
+    int const top_border = this->height;
+    int const right_border = this->width;
     int const left_border = 0;
 
     size_t const sz = birds.size();
@@ -149,7 +149,6 @@ void Scene::update(double const dt) {
                 Vec2 const p_avg = p_tot/num_neighbors;
                 Vec2 const v_avg = v_tot/num_neighbors;
                 birds[i].vel +=  dt * (p_avg - p1) * birds[i].params.centering_factor;
-
                 birds[i].vel +=  dt * (v_avg - v1) * birds[i].params.matching_factor;
 
             }
@@ -157,10 +156,11 @@ void Scene::update(double const dt) {
             double const turn_accel = birds[i].params.turn_accel;
             //NOTE: updating this directly and not using angles may be a bit sketch
             //I made the birds just loop overfor now, og calcs dont  seem to work
-            if (p1.x  < left_border) birds[i].pos.x = right_border;
-            if (p1.x > right_border) birds[i].pos.x = left_border;
-            if (p1.y > top_border) birds[i].pos.y = bottom_border;
-            if (p1.y < bottom_border) birds[i].pos.y = top_border;
+
+            if (p1.x - birds[i].params.view_radius < left_border) birds[i].vel.x  += turn_accel * dt;
+            if (p1.x + birds[i].params.view_radius > right_border) birds[i].vel.x -= turn_accel* dt;
+            if (p1.y - birds[i].params.view_radius > top_border) birds[i].vel.y -= turn_accel* dt;
+            if (p1.y + birds[i].params.view_radius < bottom_border) birds[i].vel.y += turn_accel* dt;
 
 
             double const reqspeed = birds[i].vel.mag(); 

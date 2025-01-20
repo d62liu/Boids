@@ -7,7 +7,7 @@
 #include "boid_interface.h"
 int main(int argc, char*argv[]) {
     SDL_Init(SDL_INIT_EVERYTHING);
-    #define WIDTH 800
+    #define WIDTH 1000
     #define HEIGHT 600
     SDL_Window *window = SDL_CreateWindow("test",SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, 0);
     if(!window) fprintf(stderr, "could not make window: %s" "\n", SDL_GetError());
@@ -18,10 +18,10 @@ int main(int argc, char*argv[]) {
 
     SDL_Event window_event;
     GameWindow *gamewindow = new GameWindow(WIDTH, HEIGHT);
-    double dt =0;
+    double dt = 0;
     size_t LAST = 0;
     size_t NOW = SDL_GetPerformanceCounter();
-    int numbirds = 100;
+    int numbirds = 500;
     while(1) {
         while(numbirds) {
             --numbirds;
