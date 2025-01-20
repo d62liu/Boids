@@ -29,6 +29,9 @@ void GameWindow::placeBird(int x, int y) {
     ++count;
     this->scene->makeBoid(x,y, count * (count&1? -1 : 1),count * (count%3? -1 : 1));
 }
+void GameWindow::setAllParams(BoidParams params) {
+    this->scene->setParams(params);
+}
 //Does not free renderer
 
 void GameWindow::renderGui(SDL_Renderer *renderer) {
@@ -38,7 +41,7 @@ void GameWindow::renderGui(SDL_Renderer *renderer) {
     int const FONTSZ = 2;
     int const padding = FONTSZ;
     int const FPS = this->FPS;
-    std::string const text_fps = "FPS: " + std::to_string(FPS);
+    std::string const text_fps = "I love birds + FPS: " + std::to_string(FPS);
     std::vector<SDL_Rect> rectsout;
     //NOTE: idk if i should use sizet or int here, since sizet forces a cast
     for(int charind = 0; charind < text_fps.size(); ++charind) {
@@ -64,10 +67,10 @@ void GameWindow::renderGui(SDL_Renderer *renderer) {
 void GameWindow::renderBirds(SDL_Renderer *renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     std::vector<Boid> const boids= scene->getBoids();
-    constexpr double BOID_HEAD = 15;
-    constexpr double BOID_WINGSPAN = 8;
-    constexpr double BOID_TAIL = 10;
-    constexpr double BOID_BUTT = 5;
+    constexpr double BOID_HEAD = 7.5;
+    constexpr double BOID_WINGSPAN = 8/2.0;
+    constexpr double BOID_TAIL = 10/2.0;
+    constexpr double BOID_BUTT = 5/2.0;
     for(Boid const& curboid : boids) {
         double const speed = curboid.vel.mag();
         Vec2 head= BOID_HEAD*curboid.vel/speed;

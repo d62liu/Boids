@@ -12,6 +12,7 @@ public:
     GameWindow(int w, int h);
     void placeBird(int x,int y);
     void update(double dt);
+    void setAllParams(BoidParams params);
     //Does not free renderer
     void render(SDL_Renderer *renderer);
 };

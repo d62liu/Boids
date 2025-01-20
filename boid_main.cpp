@@ -73,14 +73,14 @@ Vec2 operator/(double const scale, Vec2 v){
 
 
 BoidParams::BoidParams(void) {
-    this->view_radius = 200;
+    this->view_radius = 600;
     this->protected_radius = 20,
-    this->avoid_factor = 0.2, 
-    this->matching_factor = 0.001, 
-    this->centering_factor = 0.006, 
-    this->turn_accel = 13,
-    this->min_speed= 600, 
-    this->max_speed = 800;
+    this->avoid_factor = 0.1, 
+    this->matching_factor = 0.005, 
+    this->centering_factor = 0.0005, 
+    this->turn_accel = 5,
+    this->min_speed= 400, 
+    this->max_speed = 600;
 }
 
 Boid::Boid(Vec2 pos) {
@@ -110,6 +110,12 @@ void Scene::makeBoid(double x, double y, double vx, double vy){
     birds.push_back(Boid(Vec2(x,y), Vec2(vx, vy)));
 }
 
+void Scene::setParams(BoidParams params) {
+    for(auto & bird : this->birds) {
+        bird.params = params;
+    }
+}
+
 void Scene::update(double const dt) {
     int const top_border = this->height-1;
     int const right_border = this->width-1;
@@ -136,7 +142,6 @@ void Scene::update(double const dt) {
             birds[i].vel -= dt * distance * birds[i].params.avoid_factor; //calculation for Separation
 
             //TODO: fix overflow error using "rolling" average
-            double const& view_radius = birds[i].params.view_radius;
             if((p1-p2).mag() < birds[i].params.view_radius) { //setting variables for Cohesion and Alignment
                 p_tot += p2;
                 v_tot += v2;
@@ -151,12 +156,13 @@ void Scene::update(double const dt) {
 
             }
 
+            double const& wall_radius = 200;
             double const& turn_accel = birds[i].params.turn_accel;
 
-            if (p1.x - view_radius < left_border) birds[i].vel.x  += turn_accel * dt;
-            if (p1.x +view_radius > right_border) birds[i].vel.x -= turn_accel* dt;
-            if (p1.y - view_radius < bottom_border) birds[i].vel.y += turn_accel* dt;
-            if (p1.y + view_radius > top_border) birds[i].vel.y -= turn_accel* dt;
+            if (p1.x - wall_radius < left_border) birds[i].vel.x  += turn_accel * dt;
+            if (p1.x +wall_radius > right_border) birds[i].vel.x -= turn_accel* dt;
+            if (p1.y - wall_radius < bottom_border) birds[i].vel.y += turn_accel* dt;
+            if (p1.y + wall_radius > top_border) birds[i].vel.y -= turn_accel* dt;
 
 
             double const& reqspeed = birds[i].vel.mag(); 

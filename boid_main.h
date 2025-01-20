@@ -56,6 +56,7 @@ public:
 
     void makeBoid(double x, double y);
     void makeBoid(double x, double y, double vx, double vy);
+    void setParams(BoidParams params);
 
     void update(double const dt);
 };
