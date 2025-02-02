@@ -124,9 +124,31 @@ struct AABB{
         width = half_height;
         height = half_width; 
     }
-    bool contains(Vec2 p){
-        if 
+        bool contains(Vec2 p){
+            return (p.x >= x - width && p.x <= x + width
+                    && p.y >= y - height && p.y <= y + height);
+        }
+    bool intersects(AABB other){
+        return  !(other.x - other.width > x + width ||
+                    other.x + other.width < x - width ||
+                    other.y - other.height > y + height ||
+                    other.y + other.height < y - height);
+    };
+};
+
+class QuadTree{
+    AABB boundary;
+    Vec2 boid;
+    bool divided;
+    QuadTree* North_East;
+    QuadTree* North_West;
+    QuadTree* South_East;
+    QuadTree* South_West;
+    QuadTree(AABB bound, bool divided = false, QuadTree* NE = nullptr, QuadTree* NW = nullptr, QuadTree* SE = nullptr, QuadTree* SW = nullptr){
+        
+
     }
+
 }
 
 
