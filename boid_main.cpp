@@ -116,6 +116,27 @@ void Scene::setParams(BoidParams params) {
     }
 }
 
+struct AABB{
+    double x, y, width, height;
+    AABB(double center_x, double center_y, double half_width, double half_height){
+        x = center_x;
+        y = center_y;
+        width = half_height;
+        height = half_width; 
+    }
+    bool contains(Vec2 p){
+        if 
+    }
+}
+
+
+
+
+
+
+
+
+
 void Scene::update(double const dt) {
     int const top_border = this->height-1;
     int const right_border = this->width-1;
