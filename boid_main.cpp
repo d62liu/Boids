@@ -121,12 +121,12 @@ struct AABB{
     AABB(double center_x, double center_y, double half_width, double half_height){
         x = center_x;
         y = center_y;
-        width = half_height;
-        height = half_width; 
+        width = half_width;
+        height = half_height; 
     }
-        bool contains(Vec2 p){
-            return (p.x >= x - width && p.x <= x + width
-                    && p.y >= y - height && p.y <= y + height);
+    bool contains(Boid b){
+        return (b.pos.x >= x - width && b.pos.x <= x + width
+                && b.pos.y >= y - height && b.pos.y <= y + height);
         }
     bool intersects(AABB other){
         return  !(other.x - other.width > x + width ||
@@ -137,27 +137,72 @@ struct AABB{
 };
 
 class QuadTree{
+public:
     AABB boundary;
-    Vec2 boid;
-    bool divided;
-    QuadTree* North_East;
-    QuadTree* North_West;
-    QuadTree* South_East;
-    QuadTree* South_West;
-    QuadTree(AABB bound, bool divided = false, QuadTree* NE = nullptr, QuadTree* NW = nullptr, QuadTree* SE = nullptr, QuadTree* SW = nullptr){
-        
+    Boid boid;
+    bool divided = false;
+    std::vector<Boid> birds;
+    QuadTree* North_East = nullptr;
+    QuadTree* North_West = nullptr;
+    QuadTree* South_East = nullptr;
+    QuadTree* South_West = nullptr;
+    QuadTree(AABB bound): boundary(bound){}
+        bool insert(Boid boid) {
+            if (!boundary.contains(boid)) {
+                return false;
+            }
+            if (birds.size() < 4) {
+                birds.push_back(boid);
+                return true;
+            }
+            if (!divided) {
+                subdivide();
+            }
+            if (North_East->insert(boid)) return true;
+            if (North_West->insert(boid)) return true;
+            if (South_East->insert(boid)) return true;
+            if (South_West->insert(boid)) return true;
 
-    }
+            return false;
+        }
 
+        void subdivide(){
+            double new_width = boundary.width/2;
+            double new_height= boundary.height/2;
+            North_East = new QuadTree(AABB(boundary.x + new_width, boundary.y - new_height, new_width, new_height));
+            North_West = new QuadTree(AABB(boundary.x - new_width, boundary.y - new_height, new_width, new_height));
+            South_East = new QuadTree(AABB(boundary.x + new_width, boundary.y + new_height, new_width, new_height));
+            South_West = new QuadTree(AABB(boundary.x - new_width, boundary.y + new_height, new_width, new_height));
+            divided = true;
+        }
+        std::vector<Boid> query(AABB quadrant, Boid boid) {
+            std::vector<Boid> found;
+            if (!quadrant.contains(boid)) {
+                return found;
+            }else{
+                 for (auto& b : birds) {
+                    if (quadrant.contains(b.pos)) {
+                        found.push_back(b);
+                    }
+                }
+                if (!divided) return found;
+                    }
+                std::vector<Boid>holder;
+                holder = North_West->query(quadrant, boid);
+                found.insert(found.end(), holder.begin(), holder.end());
+
+                holder = North_East->query(quadrant, boid);
+                found.insert(found.end(), holder.begin(), holder.end());
+
+                holder = South_East->query(quadrant, boid);
+                found.insert(found.end(), holder.begin(), holder.end());
+
+                holder = South_West->query(quadrant, boid);
+                found.insert(found.end(), holder.begin(), holder.end());
+            
+        }
 }
-
-
-
-
-
-
-
-
+;
 
 void Scene::update(double const dt) {
     int const top_border = this->height-1;
