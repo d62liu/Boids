@@ -142,11 +142,17 @@ public:
     Boid boid;
     bool divided = false;
     std::vector<Boid> birds;
-    QuadTree* North_East = nullptr;
-    QuadTree* North_West = nullptr;
-    QuadTree* South_East = nullptr;
-    QuadTree* South_West = nullptr;
+    QuadTree* North_East = 0;
+    QuadTree* North_West = 0;
+    QuadTree* South_East = 0;
+    QuadTree* South_West = 0;
     QuadTree(AABB bound): boundary(bound){}
+    ~QuadTree() {
+        delete North_East;
+        delete North_West;
+        delete South_East;
+        delete South_West;
+    }
         bool insert(Boid boid) {
             if (!boundary.contains(boid)) {
                 return false;
@@ -201,8 +207,7 @@ public:
                 found.insert(found.end(), holder.begin(), holder.end());
             
         }
-}
-;
+};
 
 void Scene::update(double const dt) {
     int const top_border = this->height-1;
@@ -248,7 +253,7 @@ void Scene::update(double const dt) {
             double const& turn_accel = birds[i].params.turn_accel;
 
             if (p1.x - wall_radius < left_border) birds[i].vel.x  += turn_accel * dt;
-            if (p1.x +wall_radius > right_border) birds[i].vel.x -= turn_accel* dt;
+            if (p1.x + wall_radius > right_border) birds[i].vel.x -= turn_accel* dt;
             if (p1.y - wall_radius < bottom_border) birds[i].vel.y += turn_accel* dt;
             if (p1.y + wall_radius > top_border) birds[i].vel.y -= turn_accel* dt;
 
