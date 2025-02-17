@@ -47,7 +47,7 @@ struct Boid {
 
 class Scene {
 private:
-    std::vector<Boid> birds; //naive vector
+    QuadTree quadtree;
     int height, width;
 public:
     Scene(int w, int h);

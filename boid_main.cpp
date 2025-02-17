@@ -117,24 +117,22 @@ void Scene::setParams(BoidParams params) {
 }
 
 struct AABB{
-    double x, y, width, height;
-    AABB(double center_x, double center_y, double half_width, double half_height){
-        x = center_x;
-        y = center_y;
-        width = half_width;
-        height = half_height; 
+    double left_bound, right_bound, top_bound, bot_bound;
+    AABB(double left, double right, double top, double bot){
+        left_bound = left;
+        right_bound = right;
+        top_bound = top;
+        bot_bound = bot; 
     }
     bool contains(Boid b){
-        return (b.pos.x >= x - width && b.pos.x <= x + width
-                && b.pos.y >= y - height && b.pos.y <= y + height);
+        return (b.pos.x >= left_bound && b.pos.x <= right_bound
+                && b.pos.y >= bot_bound&& b.pos.y <= top_bound);
         }
-    bool intersects(AABB other){
-        return  !(other.x - other.width > x + width ||
-                    other.x + other.width < x - width ||
-                    other.y - other.height > y + height ||
-                    other.y + other.height < y - height);
+    bool intersects(const AABB& other) const {
+        return (left_bound <= other.right_bound && right_bound >= other.left_bound &&
+                bot_bound  <= other.top_bound   && top_bound >= other.bot_bound);
     };
-};
+}
 
 class QuadTree{
 public:
@@ -146,14 +144,17 @@ public:
     QuadTree* North_West = 0;
     QuadTree* South_East = 0;
     QuadTree* South_West = 0;
-    QuadTree(AABB bound): boundary(bound){}
+    QuadTree(const AABB& bound)
+    : boundary(bound), divided(false),
+      North_East(nullptr), North_West(nullptr),
+      South_East(nullptr), South_West(nullptr) {}
     ~QuadTree() {
         delete North_East;
         delete North_West;
         delete South_East;
         delete South_West;
     }
-        bool insert(Boid boid) {
+        bool insert(Boid& boid) {
             if (!boundary.contains(boid)) {
                 return false;
             }
@@ -175,15 +176,26 @@ public:
         void subdivide(){
             double new_width = boundary.width/2;
             double new_height= boundary.height/2;
-            North_East = new QuadTree(AABB(boundary.x + new_width, boundary.y - new_height, new_width, new_height));
-            North_West = new QuadTree(AABB(boundary.x - new_width, boundary.y - new_height, new_width, new_height));
-            South_East = new QuadTree(AABB(boundary.x + new_width, boundary.y + new_height, new_width, new_height));
-            South_West = new QuadTree(AABB(boundary.x - new_width, boundary.y + new_height, new_width, new_height));
+            double width  = boundary.right_bound - boundary.left_bound;
+            double height = boundary.top_bound - boundary.bot_bound;
+            double midX   = (boundary.left_bound + boundary.right_bound) / 2.0;
+            double midY   = (boundary.top_bound  + boundary.bot_bound) / 2.0;            
+            AABB ne(midX, boundary.right_bound, boundary.top_bound, midY);
+            AABB nw(boundary.left_bound, midX, boundary.top_bound, midY);
+            AABB se(midX, boundary.right_bound, midY, boundary.bot_bound);
+            AABB sw(boundary.left_bound, midX, midY, boundary.bot_bound);
+            
+            North_East = new QuadTree(ne);
+            North_West = new QuadTree(nw);
+            South_East = new QuadTree(se);
+            South_West = new QuadTree(sw);
             divided = true;
-        }
-        std::vector<Boid> query(AABB quadrant, Boid boid) {
+            }
+
+
+        std::vector<Boid> query(const AABB& quadrant) const {
             std::vector<Boid> found;
-            if (!quadrant.contains(boid)) {
+            if (!boundary.intersects(quadrant)){
                 return found;
             }else{
                  for (auto& b : birds) {
@@ -192,22 +204,45 @@ public:
                     }
                 }
                 if (!divided) return found;
-                    }
-                std::vector<Boid>holder;
-                holder = North_West->query(quadrant, boid);
-                found.insert(found.end(), holder.begin(), holder.end());
-
-                holder = North_East->query(quadrant, boid);
-                found.insert(found.end(), holder.begin(), holder.end());
-
-                holder = South_East->query(quadrant, boid);
-                found.insert(found.end(), holder.begin(), holder.end());
-
-                holder = South_West->query(quadrant, boid);
-                found.insert(found.end(), holder.begin(), holder.end());
-            
+                auto q = North_East->query(quadrant);
+                found.insert(found.end(), q.begin(), q.end());
+                q = North_West->query(quadrant);
+                found.insert(found.end(), q.begin(), q.end());
+                q = South_East->query(quadrant);
+                found.insert(found.end(), q.begin(), q.end());
+                q = South_West->query(quadrant);
+                found.insert(found.end(), q.begin(), q.end());
+                return found;
         }
-};
+        }
+        std::vector<Boid> radius_query(int radius, const Boid& bird) const{
+            std::vector<Boid> result;
+            AABB bound_box(bird.pos.x - radius, bird.pos.x + radius, 
+                           bird.pos.y + radius, bird.pos.y - radius);
+            if (!boundary.intersects(bound_box)){
+                return result;
+            }
+            if (!divided){
+                for (const auto& b : birds) {
+                    double dx = b.pos.x - bird.pos.x;
+                    double dy = b.pos.y - bird.pos.y;
+                    if (dx * dx + dy * dy <= radius * radius)
+                        result.push_back(b)
+            }
+            return result;
+        }
+            auto r = North_East->radius_query(radius, bird);
+            result.insert(result.end(), r.begin(), r.end());
+            r = North_West->radius_query(radius, bird);
+            result.insert(result.end(), r.begin(), r.end());
+            r = South_East->radius_query(radius, bird);
+            result.insert(result.end(), r.begin(), r.end());
+            r = South_West->radius_query(radius, bird);
+            result.insert(result.end(), r.begin(), r.end());
+            return result;
+        }
+    };
+
 
 void Scene::update(double const dt) {
     int const top_border = this->height-1;
@@ -215,7 +250,8 @@ void Scene::update(double const dt) {
     int const bottom_border = 0;
     int const left_border = 0;
 
-    size_t const sz = birds.size();
+
+    size_t const sz = quadtree.birds.size();
     for(size_t i = 0; i < sz; ++i) {
         Vec2 p_tot = Vec2(); //Cohesion
         //TODO: there has to be a better name for this
