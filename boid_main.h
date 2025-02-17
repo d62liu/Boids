@@ -2,8 +2,10 @@
 #define BOID_MAIN
 
 #include <vector>
+
+class QuadTree;
+
 struct Vec2 {
-    //x,y can be modified from outside
     double x;
     double y;
     Vec2(void);
@@ -22,43 +24,41 @@ struct Vec2 {
     friend Vec2 operator/(double const scale, Vec2 v);
 };
 
-//TODO: not so sure about if i should do this
 struct BoidParams {
-    double view_radius,
-        protected_radius,
-        avoid_factor, 
-        matching_factor, 
-        centering_factor, 
-        turn_accel,
-        min_speed, 
-        max_speed;
+    double view_radius;
+    double protected_radius;
+    double avoid_factor; 
+    double matching_factor; 
+    double centering_factor; 
+    double turn_accel;
+    double min_speed; 
+    double max_speed;
     BoidParams(void);
 };
 
-//TODO: float will do
 struct Boid {
     Vec2 pos;
     Vec2 vel;
     BoidParams params;
     Boid(Vec2 pos);
-    Boid (Vec2 pos, Vec2 vel);
+    Boid(Vec2 pos, Vec2 vel);
 };
-
 
 class Scene {
 private:
-    QuadTree quadtree;
+
+    QuadTree* quadtree;
     int height, width;
 public:
     Scene(int w, int h);
+    ~Scene(); 
     
     std::vector<Boid> const& getBoids();
-
+    
     void makeBoid(double x, double y);
     void makeBoid(double x, double y, double vx, double vy);
     void setParams(BoidParams params);
-
     void update(double const dt);
 };
 
-#endif
+#endif 

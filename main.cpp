@@ -21,7 +21,7 @@ int main(int argc, char*argv[]) {
     double dt = 0;
     size_t LAST = 0;
     size_t NOW = SDL_GetPerformanceCounter();
-    int numbirds = 300;
+    int numbirds = 1000;
     while(1) {
         while(numbirds) {
             --numbirds;

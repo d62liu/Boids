@@ -3,308 +3,313 @@
 #include <iostream>
 #include "boid_main.h"
 
-//Don't include sdl2 
+Vec2::Vec2(void) : x(0), y(0) {}
 
-//vector arithmetic is done naturally, so its ok to ignore this class and just use it.
-Vec2::Vec2(void) {
-    this->x = 0;
-    this->y = 0;
-}
-Vec2::Vec2(double x, double y) {
-    this->x = x;
-    this->y = y;
-}
+Vec2::Vec2(double x, double y) : x(x), y(y) {}
+
 double Vec2::mag(void) const { 
-    return (sqrt(x*x + y*y));//(0.96043387*std::max(x,y) + 0.397824734*std::min(x,y));
+    return std::sqrt(x * x + y * y);//(0.96043387*std::max(x,y) + 0.397824734*std::min(x,y);
 }
+
 Vec2& Vec2::operator+=(Vec2 const& v) {
-    this->x += v.x;
-    this->y += v.y;
+    x += v.x;
+    y += v.y;
     return *this;
 }
-Vec2 operator+(Vec2 lhs, Vec2 const& rhs){
+
+Vec2 operator+(Vec2 lhs, Vec2 const& rhs) {
     lhs += rhs;
     return lhs;
 }
+
 Vec2& Vec2::operator-=(Vec2 const& v) {
-    this->x -= v.x;
-    this->y -= v.y;
+    x -= v.x;
+    y -= v.y;
     return *this;
 }
-Vec2 operator-(Vec2 lhs, Vec2 const& rhs){
+
+Vec2 operator-(Vec2 lhs, Vec2 const& rhs) {
     lhs -= rhs;
     return lhs;
 }
+
 Vec2 Vec2::operator-(void) const {
-    return Vec2(-x,-y);
+    return Vec2(-x, -y);
 }
-/*
-double operator*(Vec2 const& v) const { //dot product
-    return x*v.x + y*v.y;
-}
-*/
+
 Vec2& Vec2::operator*=(double const scale) { 
-    this->x *= scale;
-    this->y *= scale;
+    x *= scale;
+    y *= scale;
     return *this;
 }
+
 Vec2 operator*(Vec2 v, double const scale) { 
     v *= scale;
     return v;
 }
+
 Vec2 operator*(double const scale, Vec2 v) { 
     v *= scale;
     return v;
 }
+
 Vec2& Vec2::operator/=(double const scale) {
-    this->x/= scale;
-    this->y/=scale;
+    x /= scale;
+    y /= scale;
     return *this;
 }
 
-Vec2 operator/(Vec2 v, double const scale){
-    v/= scale;
-    return v;
-}
-Vec2 operator/(double const scale, Vec2 v){
-    v/= scale;
+Vec2 operator/(Vec2 v, double const scale) {
+    v /= scale;
     return v;
 }
 
+Vec2 operator/(double const scale, Vec2 v) {
+    v /= scale;
+    return v;
+}
 
 BoidParams::BoidParams(void) {
-    this->view_radius = 600;
-    this->protected_radius = 20,
-    this->avoid_factor = 0.1, 
-    this->matching_factor = 0.005, 
-    this->centering_factor = 0.0005, 
-    this->turn_accel = 5,
-    this->min_speed= 400, 
-    this->max_speed = 600;
+    view_radius = 200;
+    protected_radius = 20;          
+    avoid_factor = 0.1; 
+    matching_factor = 0.5; 
+    centering_factor = 0.5; 
+    turn_accel = 1500;
+    min_speed = 400; 
+    max_speed = 600;
 }
 
-Boid::Boid(Vec2 pos) {
-    this->pos = pos;
-    this->vel = Vec2();
-    this->params = BoidParams();
-}
-Boid::Boid (Vec2 pos, Vec2 vel) {
-    this->pos = pos;
-    this->vel = vel;
-    this->params = BoidParams();
-}
+Boid::Boid(Vec2 pos) : pos(pos), vel(Vec2()), params(BoidParams()) {}
 
-Scene::Scene(int w, int h) {
-    this->width = w; 
-    this->height = h; 
-}
+Boid::Boid(Vec2 pos, Vec2 vel) : pos(pos), vel(vel), params(BoidParams()) {}
 
-std::vector<Boid> const& Scene::getBoids() {
-    return birds;
-}
-
-void Scene::makeBoid(double x, double y){
-    birds.push_back(Boid(Vec2(x,y), Vec2()));
-}
-void Scene::makeBoid(double x, double y, double vx, double vy){
-    birds.push_back(Boid(Vec2(x,y), Vec2(vx, vy)));
-}
-
-void Scene::setParams(BoidParams params) {
-    for(auto & bird : this->birds) {
-        bird.params = params;
-    }
-}
-
-struct AABB{
+struct AABB {
     double left_bound, right_bound, top_bound, bot_bound;
-    AABB(double left, double right, double top, double bot){
-        left_bound = left;
-        right_bound = right;
-        top_bound = top;
-        bot_bound = bot; 
+    
+    AABB(double left, double right, double top, double bot)
+      : left_bound(left), right_bound(right), top_bound(top), bot_bound(bot) {}
+    
+    bool contains(const Boid& b) const {
+        return contains(b.pos);
     }
-    bool contains(Boid b){
-        return (b.pos.x >= left_bound && b.pos.x <= right_bound
-                && b.pos.y >= bot_bound&& b.pos.y <= top_bound);
-        }
+    
+    bool contains(const Vec2& p) const {
+        return (p.x >= left_bound && p.x <= right_bound &&
+                p.y >= bot_bound && p.y <= top_bound);
+    }
+    
     bool intersects(const AABB& other) const {
         return (left_bound <= other.right_bound && right_bound >= other.left_bound &&
                 bot_bound  <= other.top_bound   && top_bound >= other.bot_bound);
-    };
-}
+    }
+};
 
-class QuadTree{
+class QuadTree {
 public:
     AABB boundary;
-    Boid boid;
     bool divided = false;
     std::vector<Boid> birds;
-    QuadTree* North_East = 0;
-    QuadTree* North_West = 0;
-    QuadTree* South_East = 0;
-    QuadTree* South_West = 0;
+    QuadTree* North_East = nullptr;
+    QuadTree* North_West = nullptr;
+    QuadTree* South_East = nullptr;
+    QuadTree* South_West = nullptr;
+    
     QuadTree(const AABB& bound)
-    : boundary(bound), divided(false),
-      North_East(nullptr), North_West(nullptr),
-      South_East(nullptr), South_West(nullptr) {}
+      : boundary(bound), divided(false),
+        North_East(nullptr), North_West(nullptr),
+        South_East(nullptr), South_West(nullptr) {}
+    
     ~QuadTree() {
         delete North_East;
         delete North_West;
         delete South_East;
         delete South_West;
     }
-        bool insert(Boid& boid) {
-            if (!boundary.contains(boid)) {
-                return false;
-            }
-            if (birds.size() < 4) {
-                birds.push_back(boid);
-                return true;
-            }
-            if (!divided) {
-                subdivide();
-            }
-            if (North_East->insert(boid)) return true;
-            if (North_West->insert(boid)) return true;
-            if (South_East->insert(boid)) return true;
-            if (South_West->insert(boid)) return true;
-
+    
+    bool insert(Boid& boid) {
+        if (!boundary.contains(boid))
             return false;
+        if (birds.size() < 4) {
+            birds.push_back(boid);
+            return true;
         }
-
-        void subdivide(){
-            double new_width = boundary.width/2;
-            double new_height= boundary.height/2;
-            double width  = boundary.right_bound - boundary.left_bound;
-            double height = boundary.top_bound - boundary.bot_bound;
-            double midX   = (boundary.left_bound + boundary.right_bound) / 2.0;
-            double midY   = (boundary.top_bound  + boundary.bot_bound) / 2.0;            
-            AABB ne(midX, boundary.right_bound, boundary.top_bound, midY);
-            AABB nw(boundary.left_bound, midX, boundary.top_bound, midY);
-            AABB se(midX, boundary.right_bound, midY, boundary.bot_bound);
-            AABB sw(boundary.left_bound, midX, midY, boundary.bot_bound);
-            
-            North_East = new QuadTree(ne);
-            North_West = new QuadTree(nw);
-            South_East = new QuadTree(se);
-            South_West = new QuadTree(sw);
-            divided = true;
-            }
-
-
-        std::vector<Boid> query(const AABB& quadrant) const {
-            std::vector<Boid> found;
-            if (!boundary.intersects(quadrant)){
-                return found;
-            }else{
-                 for (auto& b : birds) {
-                    if (quadrant.contains(b.pos)) {
-                        found.push_back(b);
-                    }
-                }
-                if (!divided) return found;
-                auto q = North_East->query(quadrant);
-                found.insert(found.end(), q.begin(), q.end());
-                q = North_West->query(quadrant);
-                found.insert(found.end(), q.begin(), q.end());
-                q = South_East->query(quadrant);
-                found.insert(found.end(), q.begin(), q.end());
-                q = South_West->query(quadrant);
-                found.insert(found.end(), q.begin(), q.end());
-                return found;
+        if (!divided) {
+            subdivide();
         }
-        }
-        std::vector<Boid> radius_query(int radius, const Boid& bird) const{
-            std::vector<Boid> result;
-            AABB bound_box(bird.pos.x - radius, bird.pos.x + radius, 
-                           bird.pos.y + radius, bird.pos.y - radius);
-            if (!boundary.intersects(bound_box)){
-                return result;
+        if (North_East->insert(boid)) return true;
+        if (North_West->insert(boid)) return true;
+        if (South_East->insert(boid)) return true;
+        if (South_West->insert(boid)) return true;
+        return false;
+    }
+    
+    void subdivide(){
+        double midX = (boundary.left_bound + boundary.right_bound) / 2.0;
+        double midY = (boundary.top_bound + boundary.bot_bound) / 2.0;            
+        AABB ne(midX, boundary.right_bound, boundary.top_bound, midY);
+        AABB nw(boundary.left_bound, midX, boundary.top_bound, midY);
+        AABB se(midX, boundary.right_bound, midY, boundary.bot_bound);
+        AABB sw(boundary.left_bound, midX, midY, boundary.bot_bound);
+        
+        North_East = new QuadTree(ne);
+        North_West = new QuadTree(nw);
+        South_East = new QuadTree(se);
+        South_West = new QuadTree(sw);
+        divided = true;
+    }
+    
+    std::vector<Boid> query(const AABB& quadrant) const {
+        std::vector<Boid> found;
+        if (!boundary.intersects(quadrant)){
+            return found;
+        } else {
+            for (auto& b : birds) {
+                if (quadrant.contains(b))
+                    found.push_back(b);
             }
-            if (!divided){
-                for (const auto& b : birds) {
-                    double dx = b.pos.x - bird.pos.x;
-                    double dy = b.pos.y - bird.pos.y;
-                    if (dx * dx + dy * dy <= radius * radius)
-                        result.push_back(b)
-            }
-            return result;
-        }
-            auto r = North_East->radius_query(radius, bird);
-            result.insert(result.end(), r.begin(), r.end());
-            r = North_West->radius_query(radius, bird);
-            result.insert(result.end(), r.begin(), r.end());
-            r = South_East->radius_query(radius, bird);
-            result.insert(result.end(), r.begin(), r.end());
-            r = South_West->radius_query(radius, bird);
-            result.insert(result.end(), r.begin(), r.end());
-            return result;
-        }
-    };
-
-
-void Scene::update(double const dt) {
-    int const top_border = this->height-1;
-    int const right_border = this->width-1;
-    int const bottom_border = 0;
-    int const left_border = 0;
-
-
-    size_t const sz = quadtree.birds.size();
-    for(size_t i = 0; i < sz; ++i) {
-        Vec2 p_tot = Vec2(); //Cohesion
-        //TODO: there has to be a better name for this
-        Vec2 distance = Vec2();//Separation
-        Vec2 v_tot = Vec2(); //Alignment
-        size_t num_neighbors = 0;
-        for(size_t j = 0; j < sz; ++j) {
-            //for the current time frame.
-            Vec2 const& p1 = birds[i].pos;
-            Vec2 const& v1 = birds[i].vel;
-            Vec2 const& p2 = birds[j].pos;
-            Vec2 const& v2 = birds[j].vel;
-
-            if(((p2-p1).mag()) <= birds[i].params.protected_radius)
-                distance += (p2 - p1);  //setting variables for Separation
-
-            birds[i].vel -= dt * distance * birds[i].params.avoid_factor; //calculation for Separation
-
-            //TODO: fix overflow error using "rolling" average
-            if((p1-p2).mag() < birds[i].params.view_radius) { //setting variables for Cohesion and Alignment
-                p_tot += p2;
-                v_tot += v2;
-                ++num_neighbors;
-            }
-
-            if (num_neighbors > 0) { //Calculation for Cohesion and Alignment
-                Vec2 const p_avg = p_tot/num_neighbors;
-                Vec2 const v_avg = v_tot/num_neighbors;
-                birds[i].vel +=  dt * (p_avg - p1) * birds[i].params.centering_factor;
-                birds[i].vel +=  dt * (v_avg - v1) * birds[i].params.matching_factor;
-
-            }
-
-            double const& wall_radius = 200;
-            double const& turn_accel = birds[i].params.turn_accel;
-
-            if (p1.x - wall_radius < left_border) birds[i].vel.x  += turn_accel * dt;
-            if (p1.x + wall_radius > right_border) birds[i].vel.x -= turn_accel* dt;
-            if (p1.y - wall_radius < bottom_border) birds[i].vel.y += turn_accel* dt;
-            if (p1.y + wall_radius > top_border) birds[i].vel.y -= turn_accel* dt;
-
-
-            double const& reqspeed = birds[i].vel.mag(); 
-            constexpr double EPSILON = 1e-9;
-            if (reqspeed < birds[i].params.min_speed)
-                birds[i].vel *= birds[i].params.min_speed/(reqspeed+EPSILON);
-            if (reqspeed > birds[i].params.max_speed)
-                birds[i].vel *= birds[i].params.max_speed/(reqspeed+EPSILON);
-
+            if (!divided) return found;
+            auto q = North_East->query(quadrant);
+            found.insert(found.end(), q.begin(), q.end());
+            q = North_West->query(quadrant);
+            found.insert(found.end(), q.begin(), q.end());
+            q = South_East->query(quadrant);
+            found.insert(found.end(), q.begin(), q.end());
+            q = South_West->query(quadrant);
+            found.insert(found.end(), q.begin(), q.end());
+            return found;
         }
     }
-    //update positions
-    for(size_t i = 0; i < sz; ++i) {
-        birds[i].pos += birds[i].vel * dt;
+    
+    std::vector<Boid> radius_query(int radius, const Boid& bird) const {
+        std::vector<Boid> result;
+        AABB bound_box(bird.pos.x - radius, bird.pos.x + radius, 
+                       bird.pos.y + radius, bird.pos.y - radius);
+        if (!boundary.intersects(bound_box)){
+            return result;
+        }
+        if (!divided){
+            for (const auto& b : birds) {
+                double dx = b.pos.x - bird.pos.x;
+                double dy = b.pos.y - bird.pos.y;
+                if (dx * dx + dy * dy <= radius * radius)
+                    result.push_back(b);  
+            }
+            return result;
+        }
+        auto r = North_East->radius_query(radius, bird);
+        result.insert(result.end(), r.begin(), r.end());
+        r = North_West->radius_query(radius, bird);
+        result.insert(result.end(), r.begin(), r.end());
+        r = South_East->radius_query(radius, bird);
+        result.insert(result.end(), r.begin(), r.end());
+        r = South_West->radius_query(radius, bird);
+        result.insert(result.end(), r.begin(), r.end());
+        return result;
+    }
+};
+
+
+
+Scene::Scene(int w, int h) : width(w), height(h) {
+    int top_border = height - 1;
+    int right_border = width - 1;
+    int bottom_border = 0;
+    int left_border = 0;
+    AABB boundary(left_border, right_border, top_border, bottom_border);
+    quadtree = new QuadTree(boundary);
+}
+
+Scene::~Scene() {
+    delete quadtree;
+}
+
+std::vector<Boid> const& Scene::getBoids() {
+    return quadtree->birds;
+}
+
+void Scene::makeBoid(double x, double y) {
+    quadtree->birds.push_back(Boid(Vec2(x, y), Vec2()));
+}
+
+void Scene::makeBoid(double x, double y, double vx, double vy) {
+    quadtree->birds.push_back(Boid(Vec2(x, y), Vec2(vx, vy)));
+}
+
+void Scene::setParams(BoidParams params) {
+    for(auto & bird : quadtree->birds) {
+        bird.params = params;
+    }
+}
+
+void Scene::update(double const dt) {
+    int const top_border = height - 1;
+    int const right_border = width - 1;
+    int const bottom_border = 0;
+    int const left_border = 0;
+    
+    size_t const sz = quadtree->birds.size();
+    for (size_t i = 0; i < sz; ++i) {
+        Boid& bird = quadtree->birds[i];
+        
+        double const protected_radius = bird.params.protected_radius;
+        double const view_radius = bird.params.view_radius;
+        double const avoid_factor = bird.params.avoid_factor;
+        double const centering_factor = bird.params.centering_factor;
+        double const matching_factor = bird.params.matching_factor;
+        double const turn_accel = bird.params.turn_accel;
+        double const max_speed = bird.params.max_speed;
+        double const min_speed = bird.params.min_speed;
+        double const wall_radius = 200.0;
+        
+        Vec2 separation;
+        {
+            std::vector<Boid> close_boids = quadtree->radius_query(protected_radius, bird);
+            for (const auto& neighbor : close_boids) {
+                if ((neighbor.pos.x == bird.pos.x) && (neighbor.pos.y == bird.pos.y))
+                    continue;
+                separation -= (neighbor.pos - bird.pos);
+            }
+        }
+        
+        Vec2 position_total;
+        Vec2 velocity_total;
+        int count = 0;
+        {
+            std::vector<Boid> neighbors = quadtree->radius_query(view_radius, bird);
+            for (const auto& neighbor : neighbors) {
+                if ((neighbor.pos.x == bird.pos.x) && (neighbor.pos.y == bird.pos.y))
+                    continue;
+                position_total += neighbor.pos;
+                velocity_total += neighbor.vel;
+                ++count;
+            }
+        }
+        bird.vel += dt * separation * avoid_factor;
+        if (count > 0) {
+            Vec2 average_position = position_total / count;
+            Vec2 average_velocity = velocity_total / count;
+            bird.vel += dt * (average_position - bird.pos) * centering_factor;
+            bird.vel += dt * (average_velocity - bird.vel) * matching_factor;
+        }
+        
+        if (bird.pos.x - wall_radius < left_border)
+            bird.vel.x += turn_accel * dt;
+        if (bird.pos.x + wall_radius > right_border)
+            bird.vel.x -= turn_accel * dt;
+        if (bird.pos.y - wall_radius < bottom_border)
+            bird.vel.y += turn_accel * dt;
+        if (bird.pos.y + wall_radius > top_border)
+            bird.vel.y -= turn_accel * dt;
+        
+        double speed = bird.vel.mag();
+        constexpr double EPSILON = 1e-9;
+        if (speed < min_speed)
+            bird.vel *= min_speed / (speed + EPSILON);
+        if (speed > max_speed)
+            bird.vel *= max_speed / (speed + EPSILON);
+    }
+    for (size_t i = 0; i < sz; ++i) {
+        quadtree->birds[i].pos += quadtree->birds[i].vel * dt;
     }
 }
