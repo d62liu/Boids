@@ -70,15 +70,15 @@ Vec2 operator/(double const scale, Vec2 v) {
 }
 
 BoidParams::BoidParams(void) {
-    view_radius = 200;
-    protected_radius = 20;          
-    avoid_factor = 0.1; 
-    matching_factor = 0.5; 
-    centering_factor = 0.5; 
-    turn_accel = 1500;
-    min_speed = 400; 
-    max_speed = 600;
-}
+    view_radius = 120.0;
+    protected_radius = 40.0;
+    avoid_factor = 0.5;
+    matching_factor = 0.5;
+    centering_factor = 0.5;
+    turn_accel = 500.0;
+    min_speed = 200.0;
+    max_speed = 400.0;
+  }
 
 Boid::Boid(Vec2 pos) : pos(pos), vel(Vec2()), params(BoidParams()) {}
 

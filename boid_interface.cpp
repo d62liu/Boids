@@ -67,10 +67,11 @@ void GameWindow::renderGui(SDL_Renderer *renderer) {
 void GameWindow::renderBirds(SDL_Renderer *renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     std::vector<Boid> const boids= scene->getBoids();
-    constexpr double BOID_HEAD = 7.5;
-    constexpr double BOID_WINGSPAN = 8/2.0;
-    constexpr double BOID_TAIL = 10/2.0;
-    constexpr double BOID_BUTT = 5/2.0;
+    constexpr double scale = 0.75;
+    constexpr double BOID_HEAD = 7.5 * scale;
+    constexpr double BOID_WINGSPAN = scale * 8/2.0;
+    constexpr double BOID_TAIL = scale * 10/2.0;
+    constexpr double BOID_BUTT = scale * 5/2.0;
     for(Boid const& curboid : boids) {
         double const speed = curboid.vel.mag();
         Vec2 head= BOID_HEAD*curboid.vel/speed;
